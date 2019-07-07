@@ -7,6 +7,10 @@
 #include <chrono>
 #include <thread>
 
+// For isatty
+#include <io.h>
+
 int main();
 void PingTest();
 void CacheTest();
+void PauseConsole();

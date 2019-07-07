@@ -38,7 +38,7 @@ void SetupThreadPriority()
 
 void SetAffinity(HANDLE thread, int affinity)
 {
-   SetThreadAffinityMask(thread, 1 << affinity);
+   SetThreadAffinityMask(thread, 1ULL << affinity);
 }
 
 void WarmupThread()
@@ -166,69 +166,14 @@ int main()
    PingTest();
    
    CacheTest();
-   puts("");
-   system("pause");
-   TimePast tp;
-   int mult = 16;
-   float iterations = 1000000;
-   
-
-   while (true)
-   {
-      float averageft[128] ={ 0 };
-      float averagest[128] ={ 0 };
-      float minft[128] ={ -1 };
-      float minst[128] ={ -1 };
-      for (int i = 0; i < 128; i++)
-      {
-         minft[i] = FLT_MAX;
-         minst[i] = FLT_MAX;
-      }
-      for (int j=0; j < 1; j++)
-      {
-         for (int i=0; i < Nthread * iterations; i++)
-         {
-            tp.Reset();
-            SetThreadAffinityMask(thr, 1 << i % Nthread);
-            float ft = tp.Peek();
-            SetThreadAffinityMask(thr, 1 << i % Nthread);
-            float st = tp.Peek();
-            averageft[i % Nthread] += (ft);
-            averagest[i % Nthread] += (st - ft);
-            minft[i % Nthread] < ft ? (void)0 : (minft[i % Nthread] = ft);
-            minst[i % Nthread] < (st - ft) ? (void)0 : (minst[i % Nthread] = (st - ft));
-            
-         }
-         timeEndPeriod(1);
-         if (j % 1000 == 0)
-         {
-            printf("%d\n", j);
-         }
-         tp.Reset();
-         SetThreadAffinityMask(thr, 1 << j % 6 + 2);
-         while (tp.Peek() <= 0.00001f);
-         timeBeginPeriod(1);
-      }
-      for (int i=0; i < Nthread; i++)
-      {
-         float ft = averageft[i] / iterations * tons;
-         float st = averagest[i] / iterations * tons;
-         if (i % 2 == 0)
-         {
-            puts("");
-         }
-
-         printf("thread%d, switch: %f, add:%f\n", i, ft, st);
-      }
-      system("pause");
-   }
+   PauseConsole();
    return 0;
 }
 
 void PingTest()
 {
    LONG lock = 0;
-   printf("\ncore to core latency(ns)");
+   printf("core to core latency(ns)");
    for (int i = 0; i < Nthread; i++)
    {
       printf(", %d", i);
@@ -260,7 +205,7 @@ void CacheTest()
    for (size_t loop = CACHETESTSTARTSIZE; loop <= CACHETESTENDSIZE; loop *= 2)
    {
       int cachePingCount = (int)(1.f / (float)((float)loop / ((float)CACHETESTENDSIZE))) * 4;
-      printf("\nTesting cache size %dKB (GB/s)", loop / 1024);
+      printf("\nTesting cache size %lluKB (GB/s)", loop / 1024);
       for (int i = 0; i < Nthread; i++)
       {
          printf(", %d", i);
@@ -295,4 +240,13 @@ void CacheTest()
       }
    }
    delete[] data;
+}
+
+void PauseConsole()
+{
+   if (_isatty(_fileno(stdout)))
+   {
+      puts("");
+      system("pause");
+   }
 }
